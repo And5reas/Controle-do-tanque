@@ -4,6 +4,13 @@
 #include <ESPAsyncWebServer.h>
 #include "senhaWifi.h"
 
+// Configuração do IP estático:
+IPAddress local_IP(192, 168, 146, 184);
+IPAddress gateway(192, 168, 146, 1);        // Geralmente o IP do seu roteador
+IPAddress subnet(255, 255, 255, 0);
+IPAddress primaryDNS(8, 8, 8, 8);            // Opcional: servidor DNS primário
+IPAddress secondaryDNS(8, 8, 4, 4);          // Opcional: servidor DNS secundário
+
 // Estabelecendo conexão com a internet via Wi-Fi
 const char* ssid = ssidSecret;
 const char* password = passwordSecret;
@@ -43,6 +50,11 @@ void broadcastData() {
 }
 
 void ConectWifi() {
+  // Define o IP estático
+  if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
+    Serial.println("Falha na configuração do IP estático");
+  }
+
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) {
