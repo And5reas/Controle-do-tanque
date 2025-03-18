@@ -9,11 +9,31 @@ const char* password = passwordSecret;
 
 // Configuração do MQTT
 const char* mqttServer = "test.mosquitto.org";
+const char topico[36] = "projeto/tanque/216590/215446/214707";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 
 static unsigned long lastMsg = 0;
+
+// Função para publicar um JSON
+void sendJson() {
+  StaticJsonDocument<200> doc;  // Cria um JSON de até 200 bytes
+  
+  // Simula dados de sensores
+  float temperatura = 25.6;
+  float umidade = 60.4;
+
+  doc["temperatura"] = temperatura;
+  doc["umidade"] = umidade;
+
+  char jsonBuffer[512];
+  serializeJson(doc, jsonBuffer); // Converte JSON para string
+
+  client.publish(topico, jsonBuffer);  // Envia JSON via MQTT
+  Serial.println("JSON enviado:");
+  Serial.println(jsonBuffer);
+}
 
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Mensagem recebida no tópico: ");
@@ -31,7 +51,7 @@ void reconnect() {
     Serial.print("Tentando conexão MQTT...");
     if (client.connect("andreassss")) {  // Nome do cliente MQTT
       Serial.println("Conectado!");
-      client.subscribe("batataAndreas/topico");  // Inscreve-se em um tópico
+      client.subscribe(topico);  // Inscreve-se em um tópico
     } else {
       Serial.print("Falha, rc=");
       Serial.print(client.state());
@@ -40,8 +60,6 @@ void reconnect() {
     }
   }
 }
-
-
 
 void ConectWifi() {
 
@@ -77,9 +95,6 @@ void loop() {
   // Publica uma mensagem a cada 5 segundos
   if ((millis() - lastMsg) > 5000) {
     lastMsg = millis();
-    String msg = "Hello MQTT";
-    client.publish("batataAndreas/topico", msg.c_str());
-    Serial.println("Mensagem publicada: " + msg);
-    Serial.println(client.connected());
+    sendJson();
   }
 }
