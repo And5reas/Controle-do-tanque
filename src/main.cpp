@@ -11,21 +11,27 @@ const char* password = passwordSecret;
 const char* mqttServer = "test.mosquitto.org";
 const char topico[36] = "projeto/tanque/216590/215446/214707";
 
+const int trigPin = 5;
+const int echoPin = 18;
+const int bombaPin = 33;
+const int solenoidePin = 32;
+
+//define sound speed in cm/uS
+#define SOUND_SPEED 0.034
+
 WiFiClient espClient;
 PubSubClient client(espClient);
 
 static unsigned long lastMsg = 0;
 
+long duration;
+float distanceCm;
+
 // Função para publicar um JSON
 void sendJson() {
   JsonDocument doc;  // Cria um JSON de até 200 bytes
   
-  // Simula dados de sensores
-  float temperatura = 25.6;
-  float umidade = 60.4;
-
-  doc["temperatura"] = temperatura;
-  doc["umidade"] = umidade;
+  doc["nivel"] = distanceCm;
 
   char jsonBuffer[512];
   serializeJson(doc, jsonBuffer); // Converte JSON para string
@@ -81,6 +87,11 @@ void setup() {
   Serial.print("Connecting to ");
   Serial.println(ssid);
 
+  pinMode(echoPin, INPUT);
+  pinMode(trigPin, OUTPUT);
+  pinMode(bombaPin, OUTPUT);
+  pinMode(solenoidePin, OUTPUT);
+
   ConectWifi();
 
   // Configurar o cliente MQTT
@@ -90,11 +101,37 @@ void setup() {
   reconnect();
 }
 
+void hcsr04() {
+  // Clears the trigPin
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+
+  // Sets the trigPin on HIGH state for 10 micro seconds
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  duration = pulseIn(echoPin, HIGH);
+
+  // Calculate the distance
+  distanceCm = duration * SOUND_SPEED/2;
+
+  delay(200);
+}
+
 void loop() {
   client.loop();
   // Publica uma mensagem a cada 5 segundos
   if ((millis() - lastMsg) > 5000) {
     lastMsg = millis();
+    hcsr04();
     sendJson();
+  }
+
+  if (distanceCm < 10) {
+    digitalWrite(bombaPin, HIGH);
+  } else {
+    digitalWrite(bombaPin, LOW);
   }
 }
