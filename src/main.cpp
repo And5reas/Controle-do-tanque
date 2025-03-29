@@ -18,7 +18,7 @@ static unsigned long lastMsg = 0;
 
 // Função para publicar um JSON
 void sendJson() {
-  StaticJsonDocument<200> doc;  // Cria um JSON de até 200 bytes
+  JsonDocument doc;  // Cria um JSON de até 200 bytes
   
   // Simula dados de sensores
   float temperatura = 25.6;
